@@ -6,15 +6,23 @@
 </head>
 <body>
 
-<div class="container">
-    <h2>Signup</h2>
+<div class="auth-container">
+    <div class="auth-card glass">
 
-    <input type="text" id="username" placeholder="Enter Username">
-    <input type="password" id="password" placeholder="Enter Password">
+        <h2>📝 Create Account</h2>
+        <p class="subtitle">Join us today</p>
 
-    <button onclick="register()">Signup</button>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
 
-    <a href="/login">Already have an account? Login</a>
+        <button class="gold-btn" onclick="register()">Signup</button>
+
+        <p class="switch-text">
+            Already have an account?
+            <a href="/login">Login</a>
+        </p>
+
+    </div>
 </div>
 
 <script src="/script.js"></script>

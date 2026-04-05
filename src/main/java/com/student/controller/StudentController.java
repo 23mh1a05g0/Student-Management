@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
+@CrossOrigin("*")
 @RestController
 @RequestMapping("/students")
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class StudentController {
     private final StudentService studentService;
     private final S3Service s3Service;
 
-    // ✅ CREATE (POST)
+    // ✅ CREATE
     @PostMapping(consumes = "multipart/form-data")
     public Student addStudent(
             @RequestParam("student") String studentJson,
@@ -36,7 +37,7 @@ public class StudentController {
         return studentService.addStudent(student);
     }
 
-    // ✅ READ ALL (without pagination)
+    // ✅ READ ALL
     @GetMapping
     public List<Student> getAllStudents() {
         return studentService.getAllStudents();
@@ -69,15 +70,16 @@ public class StudentController {
         return "Student deleted successfully";
     }
 
-    // 🔥 NEW: FILTER + PAGINATION API
+    // 🔥 FILTER + PAGINATION + SORT
     @GetMapping("/filter")
     public Page<Student> getStudents(
             @RequestParam(required = false) String skills,
             @RequestParam(required = false) String gender,
             @RequestParam(required = false) Integer age,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "4") int size
+            @RequestParam(defaultValue = "4") int size,
+            @RequestParam(required = false) String sort
     ) {
-        return studentService.getStudents(skills, gender, age, page, size);
+        return studentService.getStudents(skills, gender, age, page, size, sort);
     }
 }

@@ -3,9 +3,7 @@ package com.student.service;
 import com.student.model.Student;
 import com.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,15 +48,13 @@ public class StudentService {
         existingStudent.setAge(updatedStudent.getAge());
         existingStudent.setGender(updatedStudent.getGender());
 
-        // If new image uploaded
+        // 🔥 IMAGE UPDATE
         if (file != null && !file.isEmpty()) {
 
-            // Delete old image from S3
             if (existingStudent.getImageUrl() != null) {
                 s3Service.deleteFile(existingStudent.getImageUrl());
             }
 
-            // Upload new image
             String imageUrl = s3Service.uploadFile(file);
             existingStudent.setImageUrl(imageUrl);
         }
@@ -77,31 +73,50 @@ public class StudentService {
         studentRepository.deleteById(id);
     }
 
-    // 🔥 NEW: FILTER + PAGINATION
-    public Page<Student> getStudents(String skills, String gender, Integer age, int page, int size) {
+    // 🔥 FILTER + PAGINATION + SORT
+    public Page<Student> getStudents(String skills, String gender, Integer age,
+                                     int page, int size, String sort) {
 
-        // Default pagination → 4 per page
-        Pageable pageable = PageRequest.of(page, size);
+        // 🔥 SKILLS → TOP 3 BASED ON COUNT
+        if ("skills".equals(sort)) {
 
-        // 🔥 Skills filter → ONLY TOP 3
-        if (skills != null && !skills.isEmpty()) {
-            return studentRepository.findBySkillsContainingIgnoreCase(
-                    skills,
-                    PageRequest.of(0, 3) // always return top 3
-            );
+            List<Student> students = studentRepository.findAll();
+
+            students.sort((a, b) -> {
+                int countA = a.getSkills() != null ? a.getSkills().split(",").length : 0;
+                int countB = b.getSkills() != null ? b.getSkills().split(",").length : 0;
+                return Integer.compare(countB, countA);
+            });
+
+            List<Student> top3 = students.stream().limit(3).toList();
+
+            return new PageImpl<>(top3);
         }
 
-        // 🔥 Gender filter
+        Pageable pageable;
+
+        // 🔥 SORTING
+        if ("ageAsc".equals(sort)) {
+            pageable = PageRequest.of(page, size, Sort.by("age").ascending());
+        } else if ("ageDesc".equals(sort)) {
+            pageable = PageRequest.of(page, size, Sort.by("age").descending());
+        } else if ("name".equals(sort)) {
+            pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        } else if ("gender".equals(sort)) {
+            pageable = PageRequest.of(page, size, Sort.by("gender").ascending());
+        } else {
+            pageable = PageRequest.of(page, size);
+        }
+
+        // 🔥 FILTERS (optional)
         if (gender != null && !gender.isEmpty()) {
             return studentRepository.findByGenderIgnoreCase(gender, pageable);
         }
 
-        // 🔥 Age filter
         if (age != null) {
             return studentRepository.findByAge(age, pageable);
         }
 
-        // 🔥 Default → all students with pagination
         return studentRepository.findAll(pageable);
     }
 }

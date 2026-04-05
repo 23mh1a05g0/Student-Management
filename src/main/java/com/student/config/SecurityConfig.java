@@ -14,10 +14,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // ❌ Disable CSRF (for REST APIs)
+            // ✅ Disable CSRF
             .csrf(csrf -> csrf.disable())
 
-            // ✅ Allow frontend + auth APIs
+            // ✅ Allow ALL required endpoints
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/login",
@@ -25,23 +25,19 @@ public class SecurityConfig {
                         "/dashboard",
                         "/style.css",
                         "/script.js",
-                        "/auth/**"
+                        "/auth/**",
+                        "/students/**"   // 🔥 THIS IS MISSING IN YOUR CODE
                 ).permitAll()
 
-                // 🔒 Any other API (future: /students/**) can be secured
-                .anyRequest().authenticated()
+                .anyRequest().permitAll() // 🔥 allow everything for now
             )
 
-            // ❌ Disable default login page
             .formLogin(form -> form.disable())
-
-            // ❌ Disable HTTP Basic auth
             .httpBasic(basic -> basic.disable());
 
         return http.build();
     }
 
-    // 🔐 Password Encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
