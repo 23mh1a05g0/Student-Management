@@ -3,6 +3,9 @@ package com.student.service;
 import com.student.model.Student;
 import com.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,19 +19,23 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final S3Service s3Service;
 
+    // ✅ CREATE
     public Student addStudent(Student student) {
         return studentRepository.save(student);
     }
 
+    // ✅ READ ALL
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
     }
 
+    // ✅ READ BY ID
     public Student getStudentById(Long id) {
         return studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
     }
 
+    // ✅ UPDATE
     public Student updateStudent(Long id, Student updatedStudent, MultipartFile file) throws IOException {
 
         Student existingStudent = getStudentById(id);
@@ -59,6 +66,7 @@ public class StudentService {
         return studentRepository.save(existingStudent);
     }
 
+    // ✅ DELETE
     public void deleteStudent(Long id) {
         Student student = getStudentById(id);
 
@@ -67,5 +75,33 @@ public class StudentService {
         }
 
         studentRepository.deleteById(id);
+    }
+
+    // 🔥 NEW: FILTER + PAGINATION
+    public Page<Student> getStudents(String skills, String gender, Integer age, int page, int size) {
+
+        // Default pagination → 4 per page
+        Pageable pageable = PageRequest.of(page, size);
+
+        // 🔥 Skills filter → ONLY TOP 3
+        if (skills != null && !skills.isEmpty()) {
+            return studentRepository.findBySkillsContainingIgnoreCase(
+                    skills,
+                    PageRequest.of(0, 3) // always return top 3
+            );
+        }
+
+        // 🔥 Gender filter
+        if (gender != null && !gender.isEmpty()) {
+            return studentRepository.findByGenderIgnoreCase(gender, pageable);
+        }
+
+        // 🔥 Age filter
+        if (age != null) {
+            return studentRepository.findByAge(age, pageable);
+        }
+
+        // 🔥 Default → all students with pagination
+        return studentRepository.findAll(pageable);
     }
 }

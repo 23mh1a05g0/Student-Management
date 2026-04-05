@@ -5,6 +5,7 @@ import com.student.model.Student;
 import com.student.service.S3Service;
 import com.student.service.StudentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +19,8 @@ public class StudentController {
 
     private final StudentService studentService;
     private final S3Service s3Service;
-    
+
+    // ✅ CREATE (POST)
     @PostMapping(consumes = "multipart/form-data")
     public Student addStudent(
             @RequestParam("student") String studentJson,
@@ -34,16 +36,19 @@ public class StudentController {
         return studentService.addStudent(student);
     }
 
+    // ✅ READ ALL (without pagination)
     @GetMapping
     public List<Student> getAllStudents() {
         return studentService.getAllStudents();
     }
 
+    // ✅ READ BY ID
     @GetMapping("/{id}")
     public Student getStudentById(@PathVariable Long id) {
         return studentService.getStudentById(id);
     }
 
+    // ✅ UPDATE
     @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public Student updateStudent(
             @PathVariable Long id,
@@ -57,9 +62,22 @@ public class StudentController {
         return studentService.updateStudent(id, updatedStudent, file);
     }
 
+    // ✅ DELETE
     @DeleteMapping("/{id}")
     public String deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return "Student deleted successfully";
+    }
+
+    // 🔥 NEW: FILTER + PAGINATION API
+    @GetMapping("/filter")
+    public Page<Student> getStudents(
+            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "4") int size
+    ) {
+        return studentService.getStudents(skills, gender, age, page, size);
     }
 }
